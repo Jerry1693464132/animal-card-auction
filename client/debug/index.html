@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Party Cards 调试台</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="top">
+      <div>
+        <h1>Party Cards</h1>
+        <p class="sub">联机调试台 · 斗地主</p>
+      </div>
+      <div class="status" id="connStatus">未连接</div>
+    </header>
+
+    <section class="panel" id="loginPanel">
+      <h2>连接</h2>
+      <div class="row">
+        <label>WS 地址 <input id="wsUrl" value="" /></label>
+        <label>玩家 ID <input id="playerId" placeholder="u1" /></label>
+        <label>昵称 <input id="displayName" placeholder="小明" /></label>
+        <button id="btnConnect">连接</button>
+      </div>
+    </section>
+
+    <section class="panel hidden" id="lobbyPanel">
+      <h2>大厅 <span id="scoreBadge" class="badge"></span></h2>
+      <div class="row">
+        <label class="check"><input type="checkbox" id="ranked" /> 积分赛</label>
+        <button id="btnCreate">创建房间</button>
+        <label>房间号 <input id="roomCode" placeholder="AB12CD" /></label>
+        <button id="btnJoin">加入</button>
+        <button id="btnLeave" class="ghost">离开房间</button>
+        <button id="btnStart" class="primary">开始对局</button>
+        <button id="btnContinuePlay">继续一起游玩</button>
+      </div>
+      <pre id="roomInfo" class="box">尚未进房</pre>
+    </section>
+
+    <section class="panel hidden" id="matchPanel">
+      <h2>对局</h2>
+      <div class="grid">
+        <div>
+          <h3>桌面 / 状态 <span id="turnClock" class="hint">—</span></h3>
+          <pre id="matchPublic" class="box"></pre>
+          <h3>拍卖</h3>
+          <pre id="auctionBox" class="box"></pre>
+          <div class="row wrap" id="auctionActions">
+            <button data-raise="1">+1</button>
+            <button data-raise="5">+5</button>
+            <button data-raise="10">+10</button>
+            <button data-raise="20">+20</button>
+            <button data-raise="30">+30</button>
+            <button data-raise="allin">All-in</button>
+          </div>
+        </div>
+        <div>
+          <h3>手牌 <span class="hint">点击选牌</span></h3>
+          <div id="hand" class="hand"></div>
+          <div class="row">
+            <button id="btnPlay" class="primary">出牌</button>
+            <button id="btnPass">过牌</button>
+            <button id="btnClearSel" class="ghost">清空选择</button>
+            <button id="btnAutoPlay" class="ghost">托管</button>
+          </div>
+          <h3>快捷对话</h3>
+          <div class="row wrap" id="quickChatActions">
+            <button data-quick-chat="just-this">就这啊</button>
+            <button data-quick-chat="easy-win">这把随便赢咯</button>
+            <button data-quick-chat="be-friends">哥们，交个朋友呗</button>
+            <button data-quick-chat="cant-afford-wrong">错不起，我对了</button>
+            <button data-quick-chat="kidding-bro">搞笑呢兄弟</button>
+          </div>
+          <h3>道具</h3>
+          <div id="items" class="items"></div>
+          <h3>待决 / 互动</h3>
+          <div id="pendingBox" class="box"></div>
+          <div class="row wrap" id="pendingActions"></div>
+        </div>
+      </div>
+      <h3>事件</h3>
+      <pre id="eventsLog" class="box log"></pre>
+    </section>
+
+    <section class="panel">
+      <h2>原始日志</h2>
+      <pre id="rawLog" class="box log"></pre>
+    </section>
+  </div>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

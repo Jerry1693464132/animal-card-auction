@@ -1,0 +1,42 @@
+---
+description: 斗地主规则引擎与对局状态机约定
+globs: src/dou-dizhu/**/*.ts
+alwaysApply: false
+---
+
+# 斗地主引擎
+
+## 模块职责
+
+| 路径 | 职责 |
+|------|------|
+| `types.ts` / `rank.ts` / `deck.ts` | 牌、点数、牌堆（三人 81 / 四人 100）、发牌 |
+| `analyzer.ts` / `comparator.ts` | 牌型识别、压牌 |
+| `auction/` | 开局拍卖权威状态机 |
+| `items/` | 32 张道具定义与品质权重池（传说 11 / 史诗 11 / 精良 10） |
+| `match/` | 对局：拍卖→发牌→出牌→道具窗→结算 |
+
+## 对局阶段
+
+`Auction → Dealing → Playing → Finished`
+
+三人场第 1 出完即 `Finished`（其余两人直接赋名次）；四人场第 2 出完即结束。结束时 `getVisibleHand` 对所有观众亮出剩余手牌。
+
+互动道具用 `pending` 窗口（开局加倍 10s 全员同时 / swap 10s / 主动技能询问 6s / 点使用后选目标或牌型再 6s / rps 同时出拳 6s + 亮出 5s / force_trade 交还 6s；持有防过载的决策人再 +`thinkTimeBonusSec`，加倍窗取全场最大）；有 pending 时禁止普通出牌/过牌，用 `tickMatch` 处理超时。开局发牌后先加倍，全员选完或超时（视为不加倍）后再弹换一下和主动技能。主动技能一次只问一个（`itemOfferQueue`）：同一人按 `TURN_ITEM_ORDER`（直接胜利最先、过载最后）；多人从触发者下家逆时针；出牌后反应先于加赛。超时或跳过视为不使用。玩点别的：双方同时 `resolve_rps`，公开状态在 picking 阶段隐藏对方手势；平局再来一轮。
+
+出牌思考 **15s**（`MATCH_TIMING.turnMs`）。防过载把 `thinkTimeBonusSec` 加在该玩家所有决策窗（出牌钟、技能询问/选择、换一下、猜拳、强易交还、挂机确认）；大脑过载期间出牌钟仍固定 4s。出牌超时先弹挂机确认 5s（`afk_host`）：**进行托管** / **取消**，超时默认托管。点取消则本回合按原超时处理（跟牌过、领出最小合法牌）且不进托管。点托管后立刻代打。公开状态带 `turnExpiresAt`、`autoPlay`。退出托管只能牌桌正中「取消托管」。
+
+## 出牌顺序
+
+发牌后：先手牌持有者先出（抢跑覆盖）。其余人用对局 `rng` 随机入座。座位 0 为先手，编号 **逆时针** 增加；`nextActiveSeat` 为 `(seat+1)%n`。牌桌椅位：下熊猫 → 右猫头鹰 → 上狐狸 → 左兔子。
+
+## 关键导出（勿随意改名）
+
+`createMatch`、`playCards`、`passTurn`、`yieldControlledLead`、`useMatchItem`、`resolveSwapHands`、`resolveRps`、`resolveScoreDouble`、`tickMatch`、`setMatchAutoPlay`、`applyAutoPlay`、`resolveAfkHost`、`toPublicMatchState`、`getPlayerHand`、`getVisibleHand`、`skipAuctionAndDeal`、拍卖 `placeRaise` / `tickAuction`
+
+## 修改检查清单
+
+- 新牌型：analyzer + comparator + `tests/dou-dizhu/`
+- 新道具：`items/definitions.ts` + `match/effects.ts` + 互动测试
+- 四带二不是炸弹；4 张及以上同点均为炸弹（张数多为大，同张数比点数）；炸弹牌只能单出、单张即最小炸弹（比四张 3 小）；王炸最大；星牌/炸弹牌走 CardKind
+- 积分赛：底分 500；开局加倍/不加倍/超级加倍（个人 ×1/×2/×4）；每打出四张及以上同点炸弹或王炸，`scoreMultiplier` ×2（单张炸弹牌不加）

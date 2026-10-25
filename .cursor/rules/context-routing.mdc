@@ -1,0 +1,25 @@
+---
+description: 新会话上下文怎么接、口径以谁为准（始终生效）
+alwaysApply: true
+---
+
+# 上下文路由
+
+新聊天默认说「按 AGENTS.md 继续」即可，不必重讲规则。
+
+## 真相来源（优先级）
+
+1. **已锁定产品口径**：`.cursor/rules/party-cards-overview.mdc`（短、始终注入；勿擅自改偏）
+2. **完整设计说明**：`docs/游戏设计文档.md`（给人读；改玩法时与 overview 同步）
+3. **领域细则**：`dou-dizhu-engine` / `score-system` / `server-protocol` / `cocos-client`（按打开文件 globs 生效）
+4. **代码**：引擎与协议实现；若与旧公式冲突，以 overview 产品口径为准并改代码对齐
+
+## 改口径时
+
+- 先改 overview（+ 必要时 GDD），再改引擎 / 协议 / UI
+- 聊天里口头改规则不算数，必须落盘到上述文件
+
+## 当前主线（省 token）
+
+- 仓库：规则引擎 + WS + 调试台 + Cocos 大厅/拍卖/牌桌；**目标平台 Steam（Windows）**；游客登录 + 本地排行榜 + 每日恢复至 0；主界面无动物选角；局内椅位动物固定（熊猫/狐狸/猫头鹰/兔子）；选场大厅按效果图同屏两步已接
+- 下一步优先：Cocos 构建 Windows 桌面版并在本机跑通 → 海外 VPS 部署 → Steamworks 接入（登录/排行榜/头像昵称）。不做任务 / 活动 / 设置 / 背包。

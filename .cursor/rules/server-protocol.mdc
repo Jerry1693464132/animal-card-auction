@@ -1,0 +1,38 @@
+---
+description: WebSocket 协议与 GameHub / 调试客户端约定
+globs:
+  - src/server/**/*.ts
+  - client/debug/**/*
+  - client/cocos/assets/scripts/net/**/*
+alwaysApply: false
+---
+
+# 联机层
+
+## 协议
+
+JSON 消息，见 `src/server/protocol.ts`。
+
+客户端常见：`hello`（游客登录，`playerId` 本机自动生成）→ `create_room`（`maxPlayers`）/ `matchmake` / `join_room` → `start_match` → `auction_raise` / `play` / `pass` / `quick_chat`（仅固定 `phraseId`，服务端校验并限频） / `yield_lead`（被操控时移交领出） / `use_item` / `resolve_swap` / `resolve_rps` / `resolve_double`（开局加倍 none/double/super） / `set_auto_play`（托管开关） / `resolve_afk_host`（出牌超时挂机确认，`host: true` 进入托管）；结算页 `continue_play`（全员点了则原班重开）/ `leave_room`；负分恢复 `restore_score`（每日一次回 0）
+
+服务端推送：`welcome`、`room`（含 `maxPlayers`、`playerAvatars`、`playerPortraitUrls`、`continueReady`、`continueExpiresAt`）、`matchmaking`、`match`（含私密 hand/items）、`events`、`quick_chat`（发言者 `playerId` + 固定 `phraseId`）、`score`（含 `dailyRestoreDay`）、`avatar`、`settlement`、`error`
+
+登录：仅 `hello` 游客登录（Steam 上架前）。微信 `wechat_login` 已移除。`hello` 可带 `avatarUrl`（Steam 正式版为 Steam 头像），房间快照用 `playerPortraitUrls` 同步给同桌。断线重连仍用 `hello` + 同一 `playerId`。
+
+形象：解锁目录仅 `panda`；主界面不提供选角。局内椅位动物由客户端按桌位固定展示（`seatRoles`），不走 `playerAvatars` 自选。协议仍保留 `claim_avatar_unlock` / `equip_avatar` 以免旧客户端报错。
+
+## GameHub
+
+- `src/server/hub.ts`：房间、对局转发、结算、匹配队列、250ms `tickAll`
+- `src/server/ws-server.ts`：HTTP 静态调试页 + 同端口 WS（默认 8787）；积分昵称默认写入 `data/accounts.json`
+- 积分通过 `src/score/`；`ranked` 房间结束才改分；开局须满员
+
+## 调试 UI
+
+`client/debug/`：双窗口不同 `playerId` 联机。改协议时同步改 `app.js` 发送/渲染（及 Cocos `Protocol.ts`）。
+
+## 注意
+
+- 一人一连接；同 `playerId` 顶号
+- 对局中默认不可 leave；断线暂留座位（重连同 id）
+- 改消息字段保持向后兼容或同时改调试台 / Cocos

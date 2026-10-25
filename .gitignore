@@ -1,0 +1,65 @@
+# Dependencies and build output
+node_modules/
+dist/
+build/
+
+# Environment and runtime data
+.env
+.env.*
+!.env.example
+data/*.json
+data/*.json.tmp
+*.log
+logs-*.txt
+tmp-*.log
+
+# OS / editor state
+.DS_Store
+Thumbs.db
+.agents/
+.codex/
+.cursor/skills/
+skills-lock.json
+.tmp/
+temp/
+
+# Cocos Creator generated files
+client/cocos/.creator/
+client/cocos/build/
+client/cocos/build-win/
+client/cocos/library/
+client/cocos/local/
+client/cocos/profiles/
+client/cocos/temp/
+client/cocos/project.private.config.json
+client/cocos/extensions/funplay-cocos-mcp/
+
+# Large reference material; runtime copies live in client/cocos/assets/resources
+docs/art/_unused_music_for_wechat/
+docs/art/ui/bg-options/
+docs/art/ui/cards/
+docs/art/ui/items/
+docs/art/ui/mockup-16x9/
+docs/art/ui/skill-style-refs/
+docs/art/ui/raw-generated/
+docs/art/ui/_*.png
+docs/art/ui/*old*
+docs/art/ui/*before*
+docs/art/ui/*preview*
+docs/art/ui/*raw*
+docs/art/ui/*letterbox*
+docs/mockups/*
+!docs/mockups/mockup-lobby-16x9.png
+!docs/mockups/mockup-auction-16x9.png
+!docs/mockups/mockup-table-hud-clean-16x9.png
+!docs/mockups/settle-bg-3.png
+!docs/mockups/settle-bg-4.png
+docs/qr/
+
+# Old Cocos CLI engine clone used only for local investigation
+.cocos-cli-test/
+
+# Local backup files
+*.bak
+*.verifybak
+*.editbox.bak

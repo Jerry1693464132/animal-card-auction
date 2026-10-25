@@ -1,0 +1,41 @@
+---
+description: 积分段位与房间结算约定
+globs: src/score/**/*.ts
+alwaysApply: false
+---
+
+# 积分
+
+- `score` 可负；创角默认 **4000**
+- 饼图：`lifetimeGainByMode` 只累加积分赛正 delta；`score<=0` 不展示
+- **负分不能匹配或开房**。`dailyRestoreNegativeScore` 把负分拉回 **0**（不计入模式占比）：UTC 跨天后首次连接/重连自动恢复，每天一次（`lastDailyRestoreDay` 记录）；`restore_score` 客户端也可主动触发
+- 娱乐房 `ranked:false` 不改分
+- 对局结束用 `settleDouDizhuMatch` / `settleRoomMatch`
+
+## 产品口径（优先，底分 500 × 个人加倍 × 炸弹倍率）
+
+积分赛斗地主按名次底分加减，无炸弹未加倍时即最终分：
+
+| 人数 | 名次 | 底分 Δ |
+|------|------|--------|
+| 3 | 第 1 | **+500** |
+| 3 | 第 2、第 3 | 各 **-188** |
+| 4 | 第 1、第 2（对等；第 2=第二个出完） | 各 **+500** |
+| 4 | 其余两人（并列，不必再比快慢） | 各 **-375** |
+
+开局发牌后先同时加倍（10s）：不加倍 ×1、加倍 ×2、超级加倍 ×4，只乘该玩家。然后才询问换一下/主动技能。对局中每打出 **四张及以上同点炸弹** 或 **王炸**，`scoreMultiplier` ×2 再乘到上表。单张炸弹牌不加。
+
+名次按 **出完先后**；三人场第 1 出完即胜，其余各 -188×倍率。
+形象：主界面不选角；局内椅位动物固定（熊猫/狐狸/猫头鹰/兔子）；纯外观。
+
+## 当前实现
+
+`settleMatchScores` 按上表底分 × `scoreMultiplier`；娱乐房 `ranked:false` 为 0。不再使用时长系数或负分衰减。
+
+## 持久化
+
+- 接口：`ScoreStore`（`src/score/store.ts`）
+- 本地默认：`JsonFileScoreStore` → 仓库根 `data/accounts.json`（可用环境变量 `SCORE_FILE` 改路径）
+- 形象解锁存在 `avatars` 字段（`equipped` + `unlocked`），当前仅默认 `panda`
+- 测试：`MemoryScoreStore`；`GameHub` 不传 store 则仅内存
+- Redis/MySQL 尚未接；换存储时实现 `ScoreStore` 即可

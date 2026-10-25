@@ -1,0 +1,25 @@
+{
+  "name": "animal-card-auction",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "free-port": "node scripts/free-port.mjs",
+    "dev": "node scripts/free-port.mjs && tsx watch src/server/main.ts",
+    "start": "tsx src/server/main.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "ws": "^8.21.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.4.1",
+    "@types/ws": "^8.18.1",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}

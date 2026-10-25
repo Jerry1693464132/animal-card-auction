@@ -1,0 +1,144 @@
+---
+description: Cocos 正式客户端（动物牌场）场景与 WS 约定
+globs:
+  - client/cocos/assets/**/*
+alwaysApply: false
+---
+
+# Cocos 客户端
+
+工程：`client/cocos`（Creator 3.8.8，项目名 `animal-card-auction-client`）
+
+## 场景流
+
+`Main.scene`（主界面）→ `DouDizhuLobby.scene`（同屏选 3/4 人 + 匹配/开房/加入）→ `Auction.scene`（开局拍卖）→ 牌桌（`TableRoom`）→ 顶部阶段栏「××获胜」+ 倒计时 6 秒 → 独立结算页（`SettleRoom`，三人/四人账本背景）
+
+满员 `start_match` / 匹配满员后进拍卖；只发 `auction_raise`（底价 10，直接加价）。拍卖结束后进牌桌：选牌 `play` / `pass` / `use_item` / `resolve_swap` / `resolve_rps` / 右上角 `set_auto_play`（托管）。三人场第 1 出完即结束，亮剩余手牌，顶部阶段栏显示「××获胜」与倒计时约 6 秒后进结算页。结算页动物画在背景上，每行显示用户名、加减分与变化后积分，胜利行「胜」在行尾；左下返回大厅，右下继续一起游玩（只显示已点人数 `x/3` 或 `x/4`，全员点了则原班重开）。拍卖过程无跳过，须拍完所有件。
+
+## 脚本
+
+| 路径 | 职责 |
+|------|------|
+| `assets/scripts/net/WsClient.ts` | WebSocket；`ensureConnected`（hello 游客登录） |
+| `assets/scripts/app/connect.ts` | `bootNet()`：`session.ensureIdentity()` + 直连 `gameServerTarget()` |
+| `assets/scripts/app/serverConfig.ts` | 服务器地址：默认 `ws://127.0.0.1:8787`，可注入 `__PARTY_CARDS_SERVER_URL__` 连海外 VPS |
+| `assets/scripts/app/friendRank.ts` | 本地排行榜（localStorage 历史最佳）；微信好友榜已移除 |
+| `assets/scripts/app/avatars.ts` | 解锁目录（与服务端对齐，仅熊猫） |
+| `assets/scripts/app/seatAnimals.ts` | 椅位固定动物（入座即扮演） |
+| `assets/resources/ui/auction-bg.png` | 拍卖厅背景（椅上已有四只动物） |
+| `assets/resources/ui/settle-bg-3.png` / `settle-bg-4.png` | 三人/四人结算账本空槽背景 |
+| `assets/scripts/app/avatarPortrait.ts` | 局内动物立绘；玩家头像走远程 URL |
+| `assets/scripts/app/uiSkin.ts` | 主界面等 UI 贴图加载（Graphics 兜底） |
+| `assets/resources/ui/` | 主界面背景等切图 |
+| `assets/scripts/net/Protocol.ts` | 与服务端消息类型对齐（含拍卖） |
+| `assets/scripts/app/Session.ts` | playerId / room / matchView |
+| `assets/scripts/ui/MainMenu.ts` | 主界面 |
+| `assets/scripts/ui/DouDizhuLobby.ts` | 选场大厅（效果图同屏两步） |
+| `assets/scripts/ui/AuctionRoom.ts` | 拍卖出价 / 倒计时 / 跳过 |
+| `assets/scripts/ui/TableRoom.ts` | 牌桌手牌 / 出牌过牌 / 点动物框看头像昵称；选牌有纸牌声 |
+- 结算页：`SettleRoom`，三人/四人账本背景已含动物头像；每行用户名 + 加减分 + 变化后积分，胜利行「胜」在行尾；左下返回大厅，右下继续一起游玩（只显示 `x/3` 或 `x/4`）。全员 `continue_play` 则原班重开拍卖。
+
+默认连 `ws://127.0.0.1:8787`。只发意图，不本地裁决胜负。`Session` 把 playerId / 昵称写入 `sys.localStorage` / `sessionStorage`，重开预览同一账号。Steam 上架前用游客登录（本机自动 playerId），上架后接 Steamworks 头像昵称。主界面左上角资料条 = 头像昵称 + 积分，**无底部动物选角**，**无右上角公告/排行榜**（入口在选场大厅背景钮）。排行榜为本地历史最佳（`loadLocalRank`），Steam 上架前可替换为 Steamworks 排行榜。
+
+### 选场大厅（DouDizhuLobby，对齐 `docs/mockups/mockup-lobby-16x9.png`）
+
+- 全屏 `lobby-bg.png`（1920×1080：中间场次/方式画在图上，左上资料、右上图标、底栏已清空）。**不要**把带 HUD 的效果图 `docs/mockups/mockup-lobby-16x9.png` 当背景
+- 三人场 / 四人场 / 匹配 / 开房 / 加入是对准绘制按钮的**透明点击区**；运行时再叠返回、资料条。右上角公告/排行榜/签到/牌型/规则画在 `lobby-bg` 上，同样用透明点击区
+- **同屏两步**：先点三人场/四人场（选中金勾），再点匹配 / 开房 / 加入。不要再做成翻页向导
+- 结算规则：底分 500（三人 +500/-188；四人前两名 +500、其余 -375），开局加倍/超级加倍只乘自己，炸弹/王炸再整桌 ×2。绘制图上的「底分 xN」只是美术，不要写进运行时文案
+- 积分为负时不能匹配或开房：大厅弹出「积分不足」，展示每日恢复至 0 的状态（`session.dailyRestoreDay`），可点「立即恢复至 0」或等次日自动恢复
+- 资料条 = 头像昵称 + 积分，不要金币、不要「黄金II」、不要改昵称
+- 签到：占位「即将开放」。不做任务 / 活动 / 设置 / 背包。
+- 匹配中 / 房间是覆盖层，不换空白页
+- 房间码 6 位（字母数字）；加入房间用输入框内容
+
+## MCP
+
+- `.cursor/mcp.json` → `funplay_cocos` @ `http://127.0.0.1:8765/`
+- Creator 须打开本工程且 Funplay MCP 在跑，Agent 才能改场景
+
+## 注意
+
+- 设计分辨率 **1920×1080** 横屏 16:9（`fitHeight`）；布局按此坐标，勿再按 720p 排
+- 改协议时同步：`src/server/protocol.ts`、`hub`、必要时 `client/debug/app.js` 与 Cocos `Protocol.ts`
+- 选场大厅按效果图同屏两步，勿再拆成选人数→选方式两页
+- 拍卖场景已接协议；牌桌 / 结算在 `Table.scene`
+
+## Windows 桌面构建（关键坑）
+
+- **`websocket` 引擎模块必须开启**（`settings/v2/packages/engine.json`）：`modules.configs.defaultConfig.cache.websocket._value = true`，且 `includeModules` 含 `"websocket"`。它映射 cmake `USE_SOCKET`（见引擎 `editor/engine-features/render-config.json`）。**关闭时原生 `new WebSocket()` 抛异常并崩溃**（退出码 `0xC0000005`，日志 `Uncaught Exception` 指向 `WsClient.ts`），表现为窗口起来 ~20s 后闪退。改动后须重新构建以重生成 `build/windows/proj/cfg.cmake`
+- VS 版本须 **≤ 2022（v17）**；Cocos 3.8.8 内置 cmake 3.24.3 不识别 VS 2026（v18）
+- 构建面板的 Windows 任务只生成 `windows.sln`（cmake 配置），**不出 exe**；需再跑 `cmake --build <proj> --config Release`（首次全量 15–30 分钟）
+- 产物在 `build/windows/proj/Release/windows.exe`（同目录需带 `v8.dll`/`SDL2.dll` 等依赖）
+- 复用脚本：`client/cocos/scripts/{rebuild-win,compile-win,run-game,check-conn}.bat`
+
+### 禁止使用 `cc.EditBox`（原生崩溃）
+
+**Windows 桌面版只要有 `cc.EditBox` 组件存在于场景中，`windows.exe` 就会在场景加载后约 8–9 秒以 `0xC0000005`（访问违例）崩溃。**
+
+已定位结论（用二分法验证，判据为「WS 是否连上」而非「进程是否存活」——脚本语法错误会让进程存活但场景根本没跑，容易误判）：
+
+- 崩溃**只取决于 `cc.EditBox`**：换成 `Node`/`UITransform`/`Graphics`/`Sprite`/`Button` 或纯对象 `{}` 都稳定；换回 `EditBox`（哪怕是「裸」组件、不接 label）必崩
+- 与 `WebSocket` **无关**（EditBox 开 + WS 关 仍崩）
+- 延迟 1 秒创建也崩 → 是原生 Win32 edit 控件的延迟堆破坏，不是启动竞态
+- 堆栈特征：崩在 `windows.exe+0x375a4a`，`RCX` 指向一个 `begin()` 被写成 `0x9000100` 的 `std::vector`（`0x9000100` 像 HWND 值）
+
+**做法**：大厅房间码输入框改为纯 JS 实现（`DouDizhuLobby.mountRoomCodeInput`，用 `Label` + 闪烁 `Graphics` 光标 + `input.on(Input.EventType.KEY_DOWN)` 处理字符/退格/回车/Esc）。**后续不要在任何场景/预制体里加 `cc.EditBox`**；需要文本输入请复用这套纯 JS 方案。
+
+#### 清理场景资产里的遗留 EditBox（已做，勿回退）
+
+`assets/scenes/DouDizhuLobby.scene` 里原本还挂着一条 `cc.EditBox`（在 `RoomCodeInput` 节点上，是早期选角/房间码输入遗留）。**必须在场景资产层面删掉**，不能只靠运行时 `stripNativeEditBoxes()` 兜底——脚本 `onLoad` 的执行时机依赖组件顺序，子节点激活早于父脚本时不保险。
+
+> **实测证据**：构建产物 `build/windows/data/assets/main/import/2a/2a745731-….json` 里确实含**真实的 `cc.EditBox` 实例**（typeDefs 里有 `cc.EditBox`，instances 里有对应条目）。exe 读的就是这个文件，所以旧产物是靠运行时兜底才没崩。源场景删净 + 重新构建后，typeDefs 21→20、instances 27→26、`cc.EditBox` 出现 **0 次**。
+
+场景文件是「对象数组 + `__id__` 下标引用」结构，**手删数组元素会让其后所有 `__id__` 引用错位**。用仓库脚本安全移除：
+
+```bash
+node scripts/strip-scene-editbox.mjs --dry   # 只报告
+node scripts/strip-scene-editbox.mjs         # 执行（自动清理引用 + 重映射 __id__ + 校验越界）
+```
+
+脚本会：找到 `cc.EditBox` → 删掉所有指向它的 `__id__` 引用 → 删除条目 → 把 > 该下标的 `__id__` 减 1 → 校验 JSON 可解析且无越界引用，并备份为 `*.editbox.bak`。
+
+注意：`.bak` 必须放在 `assets/` **之外**，否则 Creator 会为它生成 `.meta` 当成资源导入。
+
+#### 构建产物是紧凑格式，不能用 `__type__` 判断
+
+`build/windows/**/assets/main/import/2a/<scene-uuid>.json` 是 Cocos 的**压缩序列化格式**：顶层是 `[ver, 0, deps, typeDefs, instances, …]`，**没有 `__type__` 字段**，类名只在 `typeDefs[i][0]` 里。用 `grep '"__type__": "cc.EditBox"'` 会漏判（这正是最初误以为产物干净的原因）。
+
+解码检查用仓库脚本：
+
+```bash
+node scripts/decode-built-scene.mjs      # 打印 typeDefs + 各类型实例数 + EditBox 实例
+node scripts/verify-no-editbox.mjs       # 校验 data 与 Release/Resources 两份产物都无 EditBox
+node scripts/scan-editbox.mjs            # 全量扫 assets + build 里的 EditBox 字符串
+```
+
+`cc.js` 里出现 `cc.EditBox` 字样是**引擎自身的类注册**，正常；要判定的只有 typeDefs / instances。
+
+#### 触发 Cocos 构建（不点 UI）
+
+Creator 的 Funplay MCP 插件在 `http://127.0.0.1:8765/`，Cursor 侧连接可能显示 `error`，但插件本身可用。用仓库桥接脚本直连（HTTP JSON-RPC，绕过 Cursor 的 MCP 客户端）：
+
+```bash
+node scripts/mcp-call.mjs list
+node scripts/mcp-call.mjs call get_project_info
+node scripts/mcp-call.mjs call execute_javascript --args-file=temp/mcp-args-xxx.json
+```
+
+`--args-file=` 可避免 PowerShell 转义地狱。触发构建的姿势：`query-tasks-info` 取最后一个 `options.platform === 'windows'` 的成功任务 → 复用其 `options`（`scenes` 顺序把 `Main.scene` 放首位、`startScene` 设为 Main 的 uuid）→ `Editor.Message.request('builder','add-task', opts, false)` → 轮询 `query-tasks-info` 看 `state`。注意**没有 `query-task-info` 这个消息**（会报 `Message does not exist`）。
+
+改完场景后必须让 Creator 重新导入（`asset-db` / `reimport-asset`），否则 Creator 内存里的旧版本可能在保存时把 `EditBox` 写回来。
+
+**验证崩溃是否修好**（关键判据是 WS 是否连上 + 无新增崩溃事件，而不是「进程是否存活」——脚本语法错误会让进程活着但场景根本没跑）：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-run.ps1
+```
+
+它会临时把 `build/windows/proj/Release/Resources/src/settings.json` 的 `launchScene` 指到 `DouDizhuLobby`，启动 exe 观察 35 秒，比对 `Application Error` 事件数，最后还原。已实测：稳定运行、`wsEstablished=True`、崩溃事件 delta 0。
+
+另：**纯 JS 改动不需要重新编译 C++**。`build/windows/proj/Release/windows.exe` 日期可以比脚本旧——exe 读的是旁边的 `Resources/assets/main/index.js`，只要该文件刷新过（构建后跑 `compile-win.bat`）即可生效。只有改引擎模块（如 `engine.json` 的 `websocket`）或原生代码才需要重跑 cmake。
+
+
+联调要点：`build/windows/assets/assets/main/index.js` 是构建产物，`build/windows/proj/Release/Resources/...` 是运行用副本；**构建后必须再跑一次 `compile-win.bat`** 才会把新脚本刷进 `Resources`，否则跑的还是旧代码。

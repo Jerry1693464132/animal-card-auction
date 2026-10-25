@@ -1,0 +1,26 @@
+---
+description: 动物形象立绘参考与美术续作约定
+globs:
+  - docs/art/**
+  - src/avatar/**
+  - client/cocos/assets/scripts/app/avatars.ts
+  - client/cocos/assets/scripts/ui/MainMenu.ts
+alwaysApply: false
+---
+
+# 形象美术
+
+## 真相来源
+
+- 产品立绘 JPG：`docs/art/avatars/{id}.jpg`（对照表见同目录 `README.md`）
+- Cocos 运行时：`client/cocos/assets/resources/avatars/{id}.jpg`
+- 解锁 id 目录：`src/avatar/catalog.ts`（与 Cocos `avatars.ts` 同步）— 仅熊猫，主界面不提供选角
+- 局内椅位动物：`src/avatar/seatRoles.ts` / Cocos `seatAnimals.ts`（出牌逆时针：下熊猫 → 右猫头鹰 → 上狐狸，四人再加左兔子；三人场兔子椅标「观众」）；拍卖动物画在背景 `auction-bg.png` 椅子上；纯外观
+
+## 画风锁定
+
+半身卡通绅士动物、粗描边、柔和赛璐璐、略有体积；配色贴拍卖厅金木暖光。禁止写实毛发 / 影视级皮肤。后续补图贴合此档，勿拍成真人感 3D。
+
+## 需要新图时
+
+主 Agent **不要空口画细节**；应派 **Task 子 agent**（可带 `file_attachments` 附上参考 JPG），说明用途（头像圆裁、牌桌半身、解锁弹窗等）与输出路径。生成后再由主 Agent 接入工程。

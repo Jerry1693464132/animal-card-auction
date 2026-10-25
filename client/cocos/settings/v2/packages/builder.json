@@ -1,0 +1,40 @@
+{
+  "__version__": "1.3.9",
+  "bundleConfig": {
+    "custom": {
+      "wechat-subpackages": {
+        "displayName": "WeChat Subpackages",
+        "configs": {
+          "miniGame": {
+            "configMode": "fallback",
+            "fallbackOptions": {
+              "compressionType": "subpackage",
+              "isRemote": false
+            },
+            "overwriteSettings": {}
+          },
+          "native": {
+            "preferredOptions": {
+              "compressionType": "merge_dep",
+              "isRemote": false
+            },
+            "fallbackOptions": {
+              "compressionType": "merge_dep"
+            },
+            "overwriteSettings": {}
+          },
+          "web": {
+            "preferredOptions": {
+              "compressionType": "merge_dep",
+              "isRemote": false
+            },
+            "fallbackOptions": {
+              "compressionType": "merge_dep"
+            },
+            "overwriteSettings": {}
+          }
+        }
+      }
+    }
+  }
+}

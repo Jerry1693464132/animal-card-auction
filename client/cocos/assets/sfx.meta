@@ -1,0 +1,20 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "ae7e81cc-f9ba-4fa9-bc5c-20aeabb287da",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleConfigID": "wechat-subpackages",
+    "bundleName": "sfx",
+    "priority": 7,
+    "compressionType": {
+      "miniGame": "subpackage"
+    },
+    "isRemoteBundle": {
+      "miniGame": false
+    }
+  }
+}

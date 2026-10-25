@@ -1,0 +1,20 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "00df449c-47dc-4b64-960f-00b6f631cf22",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleConfigID": "wechat-subpackages",
+    "bundleName": "music",
+    "priority": 6,
+    "compressionType": {
+      "miniGame": "subpackage"
+    },
+    "isRemoteBundle": {
+      "miniGame": false
+    }
+  }
+}
